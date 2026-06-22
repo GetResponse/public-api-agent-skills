@@ -1,0 +1,15 @@
+# Sekret i konfiguracja lokalna
+.env
+**/.env
+
+# Katalog Junie (konfiguracja agenta)
+.junie/
+
+# Katalog JetBrains IDE
+.idea/
+
+# Pliki macOS Finder
+**/.DS_Store
+
+# Katalog z kopiami skilli do publicznego GitHub
+releases/

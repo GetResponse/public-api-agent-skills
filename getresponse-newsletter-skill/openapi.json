@@ -1,0 +1,1585 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "GetResponse API v3 \u2013 Campaigns, Contacts & Newsletters",
+    "version": "3.0.0",
+    "description": "Use this API to: (1) find or create campaigns (contact lists), (2) check/create custom fields, (3) add single or batch contacts with custom field values, (4) send HTML newsletters to a campaign or a filtered contact segment. Auth: set header X-Auth-Token to 'api-key YOUR_API_KEY'."
+  },
+  "servers": [
+    {
+      "url": "https://api.getresponse.com/v3"
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Auth-Token",
+        "description": "Pass your API key as: 'api-key YOUR_API_KEY'"
+      }
+    },
+    "schemas": {
+      "Campaign": {
+        "type": "object",
+        "description": "A campaign is a contact list/audience in GetResponse.",
+        "properties": {
+          "campaignId": {
+            "type": "string",
+            "description": "Unique campaign ID (use this to reference the campaign elsewhere)"
+          },
+          "name": {
+            "type": "string",
+            "description": "Campaign name \u2013 must be unique in the account"
+          },
+          "languageCode": {
+            "type": "string",
+            "description": "ISO 639-1 language code, e.g. 'en', 'pl'"
+          },
+          "isDefault": {
+            "type": "string",
+            "enum": [
+              "true",
+              "false"
+            ]
+          },
+          "createdOn": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "NewCampaign": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "description": "Payload to create a new campaign.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique campaign name"
+          },
+          "languageCode": {
+            "type": "string",
+            "description": "ISO 639-1 language code, e.g. 'en'"
+          },
+          "confirmation": {
+            "type": "object",
+            "description": "Opt-in confirmation settings",
+            "properties": {
+              "fromField": {
+                "type": "object",
+                "properties": {
+                  "fromFieldId": {
+                    "type": "string"
+                  }
+                }
+              },
+              "replyTo": {
+                "type": "object",
+                "properties": {
+                  "fromFieldId": {
+                    "type": "string"
+                  }
+                }
+              },
+              "subscriptionConfirmationBodyId": {
+                "type": "string"
+              },
+              "subscriptionConfirmationSubjectId": {
+                "type": "string"
+              }
+            }
+          },
+          "profile": {
+            "type": "object",
+            "properties": {
+              "description": {
+                "type": "string"
+              },
+              "industryTagId": {
+                "type": "string"
+              }
+            }
+          },
+          "optinTypes": {
+            "type": "object",
+            "description": "Set to 'api':'single' for API-added contacts to skip double opt-in",
+            "properties": {
+              "api": {
+                "type": "string",
+                "enum": [
+                  "single",
+                  "double"
+                ],
+                "default": "single"
+              },
+              "webform": {
+                "type": "string",
+                "enum": [
+                  "single",
+                  "double"
+                ]
+              },
+              "import": {
+                "type": "string",
+                "enum": [
+                  "single",
+                  "double"
+                ]
+              },
+              "email": {
+                "type": "string",
+                "enum": [
+                  "single",
+                  "double"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "CustomField": {
+        "type": "object",
+        "description": "A custom field definition that can be attached to contacts.",
+        "properties": {
+          "customFieldId": {
+            "type": "string",
+            "description": "Unique custom field ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Custom field name (lowercase, underscores allowed)"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "phone",
+              "number",
+              "date",
+              "datetime",
+              "single_select",
+              "multi_select"
+            ],
+            "description": "Field type"
+          },
+          "format": {
+            "type": "string",
+            "description": "Field format (e.g. 'text', 'date', 'phone')"
+          },
+          "hidden": {
+            "type": "string",
+            "enum": [
+              "true",
+              "false"
+            ]
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Allowed values for select-type fields"
+          }
+        }
+      },
+      "NewCustomField": {
+        "type": "object",
+        "required": [
+          "name",
+          "type",
+          "hidden",
+          "values"
+        ],
+        "description": "Payload to create a new custom field. NOTE: 'hidden' and 'values' are always required by the API \u2014 use hidden='false' and values=[] for text fields.",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Custom field name \u2013 must be unique, lowercase, no spaces"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "text",
+              "phone",
+              "number",
+              "date",
+              "datetime",
+              "single_select",
+              "multi_select"
+            ],
+            "description": "Field type. Use 'text' for general string values."
+          },
+          "hidden": {
+            "type": "string",
+            "enum": [
+              "true",
+              "false"
+            ],
+            "default": "false",
+            "description": "Always required. Use 'false' to make field visible."
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Always required. Use [] for text/phone/number/date types. Provide options for single_select/multi_select."
+          }
+        }
+      },
+      "ContactCustomFieldValue": {
+        "type": "object",
+        "description": "A custom field value to assign to a contact.",
+        "required": [
+          "customFieldId",
+          "value"
+        ],
+        "properties": {
+          "customFieldId": {
+            "type": "string",
+            "description": "ID of the custom field"
+          },
+          "value": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Value(s) for the custom field. Always an array, even for single values."
+          }
+        }
+      },
+      "NewContact": {
+        "type": "object",
+        "required": [
+          "email",
+          "campaign"
+        ],
+        "description": "Payload to add a single contact.",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Contact email address"
+          },
+          "name": {
+            "type": "string",
+            "description": "Contact full name"
+          },
+          "campaign": {
+            "type": "object",
+            "required": [
+              "campaignId"
+            ],
+            "description": "Campaign (list) to add the contact to",
+            "properties": {
+              "campaignId": {
+                "type": "string"
+              }
+            }
+          },
+          "dayOfCycle": {
+            "type": "string",
+            "description": "Day in autoresponder cycle, or null"
+          },
+          "customFieldValues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContactCustomFieldValue"
+            },
+            "description": "Custom field values for this contact"
+          },
+          "ipAddress": {
+            "type": "string",
+            "description": "Contact's IP address (optional)"
+          }
+        }
+      },
+      "BatchContact": {
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "description": "Single contact entry for batch import.",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "name": {
+            "type": "string"
+          },
+          "dayOfCycle": {
+            "type": "string"
+          },
+          "customFieldValues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContactCustomFieldValue"
+            }
+          }
+        }
+      },
+      "BatchContactsPayload": {
+        "type": "object",
+        "required": [
+          "campaignId",
+          "contacts"
+        ],
+        "description": "Payload for batch contact import (up to 1000 contacts per request).",
+        "properties": {
+          "campaignId": {
+            "type": "string",
+            "description": "Campaign to add contacts to"
+          },
+          "contacts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BatchContact"
+            },
+            "description": "Array of contacts to import. Max 1000 per request."
+          }
+        }
+      },
+      "Contact": {
+        "type": "object",
+        "description": "A contact record.",
+        "properties": {
+          "contactId": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "campaign": {
+            "type": "object",
+            "properties": {
+              "campaignId": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "customFieldValues": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContactCustomFieldValue"
+            }
+          },
+          "createdOn": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "NewsletterSendSettings": {
+        "type": "object",
+        "description": "Defines who receives the newsletter. IMPORTANT: selectedCampaigns and selectedSegments are arrays of plain strings (IDs), NOT arrays of objects.",
+        "properties": {
+          "selectedCampaigns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of campaignId strings. Send to all contacts in these campaigns. Example: ['camp123']"
+          },
+          "selectedContacts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of contactId strings. Send to specific contacts by ID. Example: ['contact123']"
+          },
+          "selectedSegments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Array of searchContactId strings. Send to contacts matching a saved segment. Example: ['seg123']"
+          }
+        }
+      },
+      "NewsletterContent": {
+        "type": "object",
+        "description": "Newsletter message content.",
+        "properties": {
+          "html": {
+            "type": "string",
+            "description": "Full HTML content of the newsletter"
+          },
+          "plain": {
+            "type": "string",
+            "description": "Plain text version (auto-generated from HTML if omitted)"
+          }
+        }
+      },
+      "NewNewsletter": {
+        "type": "object",
+        "required": [
+          "subject",
+          "name",
+          "content",
+          "fromField",
+          "campaign",
+          "sendSettings"
+        ],
+        "description": "Payload to create and schedule a newsletter. IMPORTANT: 'campaign' field at root level is required (sets the campaign context for unsubscribe links etc). In sendSettings, use plain string arrays for selectedCampaigns/selectedContacts/selectedSegments.",
+        "properties": {
+          "subject": {
+            "type": "string",
+            "description": "Email subject line"
+          },
+          "name": {
+            "type": "string",
+            "description": "Internal newsletter name (not visible to recipients)"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "broadcast",
+              "draft"
+            ],
+            "default": "broadcast",
+            "description": "Use 'broadcast' to send immediately or on schedule"
+          },
+          "content": {
+            "$ref": "#/components/schemas/NewsletterContent"
+          },
+          "fromField": {
+            "type": "object",
+            "required": [
+              "fromFieldId"
+            ],
+            "description": "Sender 'From' address \u2013 use /from-fields to get available IDs",
+            "properties": {
+              "fromFieldId": {
+                "type": "string"
+              }
+            }
+          },
+          "campaign": {
+            "type": "object",
+            "required": [
+              "campaignId"
+            ],
+            "description": "Root-level campaign context (required). Use the same campaignId as in sendSettings.selectedCampaigns.",
+            "properties": {
+              "campaignId": {
+                "type": "string"
+              }
+            }
+          },
+          "replyTo": {
+            "type": "object",
+            "description": "Reply-to address",
+            "properties": {
+              "fromFieldId": {
+                "type": "string"
+              }
+            }
+          },
+          "sendSettings": {
+            "$ref": "#/components/schemas/NewsletterSendSettings"
+          },
+          "sendOn": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 scheduled send time. Omit to send immediately."
+          },
+          "flags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "openrate",
+                "clicktrack",
+                "google_analytics",
+                "subscription_reminder"
+              ]
+            },
+            "description": "Optional tracking flags"
+          }
+        }
+      },
+      "Newsletter": {
+        "type": "object",
+        "description": "A newsletter record.",
+        "properties": {
+          "newsletterId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "scheduled",
+              "sending",
+              "sent",
+              "draft",
+              "error"
+            ]
+          },
+          "sendOn": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sendSettings": {
+            "$ref": "#/components/schemas/NewsletterSendSettings"
+          },
+          "createdOn": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "SearchContactsConditions": {
+        "type": "object",
+        "required": [
+          "subscribersType",
+          "sectionLogicOperator",
+          "section"
+        ],
+        "description": "Conditions to search/filter contacts (ad-hoc query). Each section requires: campaignIdsList (string array), subscriberCycle (string array), subscriptionDate (enum string), logicOperator, conditions.",
+        "properties": {
+          "subscribersType": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "subscribed",
+                "unsubscribed",
+                "notConfirmed",
+                "removed"
+              ]
+            },
+            "description": "Filter by subscription status. Use ['subscribed'] for active contacts."
+          },
+          "sectionLogicOperator": {
+            "type": "string",
+            "enum": [
+              "and",
+              "or"
+            ],
+            "description": "Logic operator between sections"
+          },
+          "section": {
+            "type": "array",
+            "description": "Array of filter sections. Each section MUST include campaignIdsList, subscriberCycle, subscriptionDate.",
+            "items": {
+              "type": "object",
+              "required": [
+                "campaignIdsList",
+                "subscriberCycle",
+                "subscriptionDate",
+                "logicOperator"
+              ],
+              "properties": {
+                "campaignIdsList": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Array of campaignId strings to search within. Example: ['camp123']"
+                },
+                "subscriberCycle": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "receiving_autoresponder",
+                      "not_receiving_autoresponder"
+                    ]
+                  },
+                  "description": "Autoresponder cycle filter. Use ['receiving_autoresponder', 'not_receiving_autoresponder'] to include all."
+                },
+                "subscriptionDate": {
+                  "type": "string",
+                  "enum": [
+                    "all_time",
+                    "today",
+                    "yesterday",
+                    "last_7_days",
+                    "last_30_days",
+                    "this_week",
+                    "last_week",
+                    "this_month",
+                    "last_month",
+                    "last_2_months",
+                    "custom"
+                  ],
+                  "description": "Subscription date range filter. Use 'all_time' to include all dates."
+                },
+                "logicOperator": {
+                  "type": "string",
+                  "enum": [
+                    "and",
+                    "or"
+                  ]
+                },
+                "conditions": {
+                  "type": "array",
+                  "description": "Filter conditions. For custom fields use conditionType='custom' with scope=customFieldId.",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "conditionType": {
+                        "type": "string",
+                        "description": "'custom' for custom fields, 'name', 'email', 'origin'"
+                      },
+                      "scope": {
+                        "type": "string",
+                        "description": "For conditionType='custom': the customFieldId to filter on"
+                      },
+                      "operator": {
+                        "type": "string",
+                        "description": "'is', 'is_not', 'contains', 'not_contains', 'starts_with', 'ends_with'"
+                      },
+                      "operatorType": {
+                        "type": "string",
+                        "description": "'string_operator' for text, 'string_operator_list' for select fields"
+                      },
+                      "value": {
+                        "type": "string",
+                        "description": "Filter value (string, not array)"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "FromField": {
+        "type": "object",
+        "description": "A verified sender 'From' address.",
+        "properties": {
+          "fromFieldId": {
+            "type": "string",
+            "description": "Use this ID in newsletter fromField"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "string",
+            "enum": [
+              "true",
+              "false"
+            ]
+          },
+          "isDefault": {
+            "type": "string",
+            "enum": [
+              "true",
+              "false"
+            ]
+          }
+        }
+      },
+      "SendingLimit": {
+        "type": "object",
+        "description": "Current API rate/sending limit status.",
+        "properties": {
+          "timeFrame": {
+            "type": "integer",
+            "description": "Time window in seconds"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Max email sends allowed in this time frame"
+          },
+          "used": {
+            "type": "integer",
+            "description": "Email sends already used in this time frame"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "httpStatus": {
+            "type": "integer"
+          },
+          "code": {
+            "type": "integer",
+            "description": "GetResponse error code"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable error message"
+          },
+          "moreInfo": {
+            "type": "string",
+            "description": "URL to error documentation"
+          }
+        }
+      }
+    },
+    "parameters": {
+      "RequestSource": {
+        "name": "X-Request-Source",
+        "in": "header",
+        "required": true,
+        "description": "Identifies agent traffic. Always set to `skill/getresponse-newsletter-skill@1.0` (format `skill/{name}@{version}`) when using this skill.",
+        "schema": {
+          "type": "string",
+          "default": "skill/getresponse-newsletter-skill@1.0"
+        }
+      }
+    }
+  },
+  "paths": {
+    "/campaigns": {
+      "get": {
+        "operationId": "listCampaigns",
+        "summary": "List all campaigns (contact lists)",
+        "description": "Search for existing campaigns by name. Use this before creating a new campaign to check if it already exists.",
+        "parameters": [
+          {
+            "name": "query[name]",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by exact or partial campaign name"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "maximum": 1000
+            }
+          },
+          {
+            "$ref": "#/components/parameters/RequestSource"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of campaigns",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Campaign"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createCampaign",
+        "summary": "Create a new campaign (contact list)",
+        "description": "Create a campaign before adding contacts. Always check if the campaign exists first using GET /campaigns?query[name]=NAME.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewCampaign"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Campaign created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Campaign"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error (e.g. name already taken)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequestSource"
+          }
+        ]
+      }
+    },
+    "/campaigns/{campaignId}": {
+      "get": {
+        "operationId": "getCampaign",
+        "summary": "Get a single campaign by ID",
+        "parameters": [
+          {
+            "name": "campaignId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/RequestSource"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Campaign details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Campaign"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Campaign not found"
+          }
+        }
+      }
+    },
+    "/custom-fields": {
+      "get": {
+        "operationId": "listCustomFields",
+        "summary": "List all custom field definitions",
+        "description": "Search for existing custom fields by name. Use this before creating a custom field to avoid duplicates.",
+        "parameters": [
+          {
+            "name": "query[name]",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by custom field name"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "maximum": 1000
+            }
+          },
+          {
+            "$ref": "#/components/parameters/RequestSource"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of custom fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CustomField"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createCustomField",
+        "summary": "Create a new custom field definition",
+        "description": "Create a custom field so it can be used when adding contacts. Always check if it exists first using GET /custom-fields?query[name]=NAME.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewCustomField"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Custom field created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomField"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequestSource"
+          }
+        ]
+      }
+    },
+    "/custom-fields/{customFieldId}": {
+      "get": {
+        "operationId": "getCustomField",
+        "summary": "Get a single custom field definition by ID",
+        "parameters": [
+          {
+            "name": "customFieldId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/RequestSource"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Custom field details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CustomField"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/contacts": {
+      "get": {
+        "operationId": "listContacts",
+        "summary": "Search/list contacts",
+        "description": "Find contacts by email, campaign, or other filters. Useful to check if a contact already exists.",
+        "parameters": [
+          {
+            "name": "query[email]",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by exact email address"
+          },
+          {
+            "name": "query[campaignId]",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by campaign ID"
+          },
+          {
+            "name": "query[name]",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "maximum": 1000
+            }
+          },
+          {
+            "name": "additionalFlags",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "customFieldValues"
+              ]
+            },
+            "description": "Pass 'customFieldValues' to include custom field data in response"
+          },
+          {
+            "$ref": "#/components/parameters/RequestSource"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of contacts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Contact"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createContact",
+        "summary": "Add a single contact to a campaign",
+        "description": "Add one contact. For multiple contacts use POST /contacts/batch. If contact already exists in the campaign, this updates their data.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewContact"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Contact accepted for processing (async operation)"
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Contact already exists in campaign"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequestSource"
+          }
+        ]
+      }
+    },
+    "/contacts/batch": {
+      "post": {
+        "operationId": "batchCreateContacts",
+        "summary": "Import multiple contacts at once (up to 1000 per request)",
+        "description": "Bulk-import contacts into a campaign. Max 1000 contacts per call. For larger sets, split into chunks of 1000 and call in parallel (respect rate limits). Custom fields must exist before using their IDs here.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchContactsPayload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Batch accepted for processing"
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequestSource"
+          }
+        ]
+      }
+    },
+    "/contacts/{contactId}": {
+      "get": {
+        "operationId": "getContact",
+        "summary": "Get full contact details by contact ID",
+        "parameters": [
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/RequestSource"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contact details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Contact"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Contact not found"
+          }
+        }
+      }
+    },
+    "/contacts/{contactId}/custom-fields": {
+      "post": {
+        "operationId": "upsertContactCustomFields",
+        "summary": "Set or update custom field values for an existing contact",
+        "description": "Upsert (insert or update) custom field values for a contact. The custom fields must already exist.",
+        "parameters": [
+          {
+            "name": "contactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/RequestSource"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "customFieldValues": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/ContactCustomFieldValue"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Custom fields updated"
+          },
+          "404": {
+            "description": "Contact not found"
+          }
+        }
+      }
+    },
+    "/newsletters": {
+      "get": {
+        "operationId": "listNewsletters",
+        "summary": "List newsletters",
+        "description": "List existing newsletters, optionally filtered by status or campaign.",
+        "parameters": [
+          {
+            "name": "query[status]",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "scheduled",
+                "sending",
+                "sent",
+                "draft",
+                "error"
+              ]
+            }
+          },
+          {
+            "name": "query[campaignId]",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 100
+            }
+          },
+          {
+            "$ref": "#/components/parameters/RequestSource"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of newsletters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Newsletter"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createNewsletter",
+        "summary": "Create and send a newsletter",
+        "description": "Create a newsletter with HTML content and send it to a campaign or a search-contacts segment. Steps: (1) get fromFieldId via GET /from-fields, (2) set sendSettings.selectedCampaigns or sendSettings.selectedSegments, (3) provide HTML in content.html.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewNewsletter"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Newsletter created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Newsletter"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequestSource"
+          }
+        ]
+      }
+    },
+    "/newsletters/{newsletterId}": {
+      "get": {
+        "operationId": "getNewsletter",
+        "summary": "Get newsletter details and delivery status",
+        "parameters": [
+          {
+            "name": "newsletterId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/RequestSource"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Newsletter details including status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Newsletter"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteNewsletter",
+        "summary": "Delete a newsletter",
+        "parameters": [
+          {
+            "name": "newsletterId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/RequestSource"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted successfully"
+          }
+        }
+      }
+    },
+    "/newsletters/{newsletterId}/cancel": {
+      "post": {
+        "operationId": "cancelNewsletter",
+        "summary": "Cancel a scheduled or in-progress newsletter send",
+        "parameters": [
+          {
+            "name": "newsletterId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/RequestSource"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Newsletter send cancelled"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      }
+    },
+    "/search-contacts/contacts": {
+      "post": {
+        "operationId": "searchContactsByConditions",
+        "summary": "Search contacts using custom field filters or campaign conditions (ad-hoc query)",
+        "description": "Execute an ad-hoc contact search using conditions (e.g. by custom field value). Returns matching contacts without saving the search. Use this to find contacts by custom field before sending a newsletter.",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "maximum": 1000
+            }
+          },
+          {
+            "$ref": "#/components/parameters/RequestSource"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchContactsConditions"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Contacts matching the conditions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "contactId": {
+                        "type": "string"
+                      },
+                      "email": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "campaign": {
+                        "type": "object",
+                        "properties": {
+                          "campaignId": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/from-fields": {
+      "get": {
+        "operationId": "listFromFields",
+        "summary": "List verified sender 'From' addresses",
+        "description": "Get available sender addresses. You need a fromFieldId to create a newsletter. Use isDefault=true to get the default sender.",
+        "parameters": [
+          {
+            "name": "query[isDefault]",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "description": "Filter to get only the default sender"
+          },
+          {
+            "name": "query[isActive]",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
+            "$ref": "#/components/parameters/RequestSource"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of from-field addresses",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FromField"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/accounts/sending-limits": {
+      "get": {
+        "operationId": "getSendingLimits",
+        "summary": "Get current API rate limits and email sending limits",
+        "description": "Check current sending limits and usage. Use this to decide batch sizes and whether to wait before sending.",
+        "responses": {
+          "200": {
+            "description": "Sending limits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SendingLimit"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/RequestSource"
+          }
+        ]
+      }
+    }
+  }
+}
