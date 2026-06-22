@@ -1,10 +1,10 @@
-# GetResponse AI Skills
+# GetResponse Public API — AI Skills
 
-Open **AI agent skills** for the [GetResponse public API](https://apireference.getresponse.com/).
+**AI agent skills** for the [GetResponse public API](https://apireference.getresponse.com/).
 
 Each skill is a self-contained package — instructions, an AI-optimized API spec, references,
-and worked examples — describing how an AI agent can perform GetResponse operations safely and
-reliably, with rate-limit handling, idempotency, and clear usage examples.
+and worked examples — describing how an AI agent can perform operations against the GetResponse
+public API safely and reliably, with rate-limit handling and clear usage examples.
 
 All skills follow the [Agent Skills (SKILL.md) standard](https://agentskills.io) and are
 compatible with [skills.sh](https://skills.sh), [SkillsMP](https://skillsmp.com), and any
