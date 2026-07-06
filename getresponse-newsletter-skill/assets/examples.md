@@ -9,16 +9,27 @@
 
 ### Step 1 — Resolve campaign
 ```
-GET /campaigns?query[name]=Q2-Leads
+# URL-encode the value: "Q2 Leads" → Q2%20Leads, brackets → %5B / %5D
+GET /campaigns?query%5Bname%5D=Q2%20Leads
 → Not found
+```
+> Don't create it silently. Ask the user first, e.g.:
+> *"I couldn't find a campaign 'Q2-Leads'. Here are your 10 most recent campaigns: … —
+> use one of these, or create a new campaign 'Q2-Leads'?"*
+After the user confirms creating a new one:
+```
 POST /campaigns  { "name": "Q2-Leads", "optinTypes": { "api": "single" } }
 → { "campaignId": "camp_abc123" }
 ```
 
 ### Step 2 — Resolve custom field "department"
 ```
-GET /custom-fields?query[name]=department
+GET /custom-fields?query%5Bname%5D=department
 → Not found
+```
+> Ask before creating: *"There's no custom field 'department'. Should I create it (type: text)?"*
+After the user confirms:
+```
 POST /custom-fields  { "name": "department", "type": "text" }
 → { "customFieldId": "cf_dept456" }
 ```
@@ -38,9 +49,15 @@ POST /contacts/batch
 
 ### Step 4a — Get sender address
 ```
-GET /from-fields?query[isDefault]=true
-→ [{ "fromFieldId": "ff_xyz789", "email": "sender@mycompany.com" }]
+GET /from-fields
+→ [
+    { "fromFieldId": "ff_xyz789", "email": "sender@mycompany.com", "isDefault": "true" },
+    { "fromFieldId": "ff_sup321", "email": "support@mycompany.com", "isDefault": "false" }
+  ]
 ```
+> More than one sender exists → ask which to use instead of picking the default automatically:
+> *"Which sender address should this go from? 1) sender@mycompany.com (default) 2) support@mycompany.com"*
+Use the `fromFieldId` the user chooses (here `ff_xyz789`).
 
 ### Step 4c — Send newsletter
 ```
@@ -77,13 +94,17 @@ POST /search-contacts/contacts?perPage=1000
   "sectionLogicOperator": "and",
   "section": [
     {
+      "campaignIdsList": ["camp_abc123"],
+      "subscriberCycle": ["receiving_autoresponder", "not_receiving_autoresponder"],
+      "subscriptionDate": "all_time",
       "logicOperator": "and",
       "conditions": [
         {
-          "conditionType": "custom_field",
+          "conditionType": "custom",
+          "scope": "cf_dept456",
           "operator": "is",
-          "operatorType": "string",
-          "value": ["Engineering"]
+          "operatorType": "string_operator_list",
+          "value": "Engineering"
         }
       ]
     }
@@ -91,6 +112,12 @@ POST /search-contacts/contacts?perPage=1000
 }
 → [{ "contactId": "c_001" }, { "contactId": "c_002" }]
 ```
+> Use `conditionType: "custom"` (not `"custom_field"`), `scope` = the `customFieldId`,
+> `operatorType: "string_operator_list"` (or `"string_operator"` for free-text fields) and a
+> **plain string** `value` (not an array). See `references/api-guide.md`.
+>
+> ⚠️ **If the search returns 0 contacts, stop — don't send.** Ask the user how to proceed
+> instead of creating a newsletter with an empty audience.
 
 ### Step 4c — Send newsletter to specific contacts
 ```
@@ -129,7 +156,13 @@ POST /newsletters
    POST /contacts/batch  { "campaignId": "...", "contacts": [...500 contacts...] }
    ```
 4. Monitor `X-RateLimit-Remaining` header; if it reaches 0 in any response, pause all further calls until `X-RateLimit-Reset`
-5. Retry any failed chunk once before reporting error
+5. Handle each chunk individually — the import can partially succeed. Retry a failed chunk once;
+   if it still fails, mark it and **continue with the remaining chunks** (don't abort the whole
+   import).
+6. Report per-chunk results, e.g. *"4 of 5 chunks accepted (4000 contacts); chunk 3 (2001–3000)
+   failed after retry — HTTP 400. Retry, skip, or fix the data?"*
+7. A `202` means *accepted*, not verified — confirm records actually landed via sampling
+   (Step 3b, Mode C), prioritising emails from chunks you're unsure about.
 
 ---
 

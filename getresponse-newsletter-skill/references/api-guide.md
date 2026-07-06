@@ -6,10 +6,47 @@ All requests require the header:
 ```
 X-Auth-Token: api-key YOUR_API_KEY
 Content-Type: application/json
-X-Request-Source: getresponse/getresponse-newsletter-skill@1.0.0
+X-Request-Source: getresponse/getresponse-newsletter-skill@1.2.0
 ```
 
 > **`X-Request-Source`** identifies agent traffic. Value format: `getresponse/{name}@{version}` (version is semver `major.minor.patch`). Agents using this skill must always include this header.
+
+---
+
+## URL Encoding of Query Parameters (avoid HTTP 400)
+
+> ⚠️ **Always URL-encode both the query keys and their values.** Sending raw
+> (unencoded) characters in a query string is the most common cause of spurious
+> HTTP 400 responses from the API.
+
+Two things must be encoded in every `GET ...?query[...]=value` request:
+
+1. **The bracket key** `query[name]` → the `[` and `]` are **reserved** and must be
+   percent-encoded: `[` = `%5B`, `]` = `%5D`. So `query[name]` becomes
+   `query%5Bname%5D`, `query[email]` becomes `query%5Bemail%5D`,
+   `query[campaignId]` becomes `query%5BcampaignId%5D`.
+2. **The value** — percent-encode the whole value. Characters that break a raw URL
+   (and cause 400 or silently wrong lookups) include:
+
+   | Character | Raw problem | Encoded |
+   |---|---|---|
+   | space | invalid in a URL | `%20` |
+   | `&` | starts a new query param | `%26` |
+   | `+` | server decodes it as a space | `%2B` |
+   | `@` | should be encoded in values | `%40` |
+   | `#` | starts a URL fragment | `%23` |
+   | `?` `/` `=` | reserved delimiters | `%3F` `%2F` `%3D` |
+   | non-ASCII (e.g. `ż`, `ó`, `ł`) | not URL-safe | UTF-8 percent bytes (e.g. `ż` → `%C5%BC`) |
+
+**Examples (campaign name / email as a value):**
+```
+Q2 Leads               → query%5Bname%5D=Q2%20Leads
+Marketing & Sprzedaż   → query%5Bname%5D=Marketing%20%26%20Sprzeda%C5%BC
+user+test@example.com  → query%5Bemail%5D=user%2Btest%40example.com
+```
+
+Most HTTP clients / `curl --data-urlencode` and `urllib.parse.quote(value, safe='')`
+do this for you — prefer a real encoder over hand-building the string.
 
 ---
 
@@ -204,6 +241,13 @@ All contact add endpoints (`POST /contacts`, `POST /contacts/batch`) return `202
 
 Before proceeding to newsletter sending, ask the user which verification mode to use. Default timeout is **10 minutes** unless the user/agent specifies otherwise.
 
+> ⚠️ **Execution constraint:** Modes A/B require an HTTP endpoint that *receives* GetResponse's
+> POST callbacks. The agent typically **cannot run a public server or hold a listener open**, so
+> it does not receive callbacks directly — the **user's backend** (Mode A) or **webhook.site**
+> (Mode B) receives them and the agent only **polls/reads the result**. If the agent has no way
+> to observe an endpoint's received events, **use Mode C (sampling)** — it works purely through
+> outbound `GET` calls and needs no listener. Mode C is the safe default.
+
 ### Mode A — Production Webhook
 
 > **Important:** GetResponse does **not** expose an API endpoint to register webhook URLs. The URL must be configured manually in the GetResponse web panel.
@@ -350,9 +394,14 @@ Before sending a newsletter, you need a valid `fromFieldId`.
 
 ### List from fields
 ```
-GET /from-fields?query[isDefault]=true&query[isActive]=true
+GET /from-fields
 ```
-Returns array of `FromField` objects. Pick `fromFieldId` from the default/active sender.
+Returns array of `FromField` objects (each has `fromFieldId`, `email`, `isDefault`, `isActive`).
+
+> **Don't guess the sender.** If more than one active from-field exists and the user hasn't
+> specified one, present the options and ask which sender address to use. Only auto-select
+> when exactly one exists or the user already named it. You may still pass
+> `query[isDefault]=true` / `query[isActive]=true` to narrow the list.
 
 ---
 

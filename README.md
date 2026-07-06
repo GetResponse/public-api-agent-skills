@@ -2,6 +2,7 @@
 
 [![Agent Skills standard](https://img.shields.io/badge/standard-SKILL.md-blue)](https://agentskills.io)
 [![GetResponse API](https://img.shields.io/badge/API-GetResponse%20v3-00baff)](https://apireference.getresponse.com/)
+[![skills.sh](https://skills.sh/b/GetResponse/public-api-agent-skills)](https://skills.sh/GetResponse/public-api-agent-skills)
 
 **AI agent skills** for the [GetResponse public API](https://apireference.getresponse.com/).
 
@@ -19,9 +20,9 @@ compatible with [skills.sh](https://skills.sh) and any SKILL.md-compatible agent
 - [What's in this repo](#whats-in-this-repo)
 - [Available skills](#available-skills)
 - [Installation](#installation)
-    - [Install via skills.sh](#install-via-skillssh)
-    - [Claude / Anthropic](#claude--anthropic)
-    - [Manual (any SKILL.md-compatible agent)](#manual-any-skillmd-compatible-agent)
+  - [Install via skills.sh](#install-via-skillssh)
+  - [Claude / Anthropic](#claude--anthropic)
+  - [Manual (any SKILL.md-compatible agent)](#manual-any-skillmd-compatible-agent)
 - [Usage examples](#usage-examples)
 - [Authentication](#authentication)
 
