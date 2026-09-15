@@ -6,10 +6,40 @@ All requests require the header:
 ```
 X-Auth-Token: api-key YOUR_API_KEY
 Content-Type: application/json
-X-Request-Source: getresponse/getresponse-newsletter-skill@1.2.0
+X-Request-Source: getresponse/getresponse-newsletter-skill@1.2.1
 ```
 
 > **`X-Request-Source`** identifies agent traffic. Value format: `getresponse/{name}@{version}` (version is semver `major.minor.patch`). Agents using this skill must always include this header.
+
+---
+
+## Standard execution workflow
+
+Use this order for every request; the endpoint sections below provide the payloads and edge cases.
+
+1. **Confirm scope and obtain credentials.** This skill handles broadcast newsletters, lists,
+   imports, and custom-field targeting only.
+2. **Resolve named resources before creating or using them.** URL-encode queries, then compare
+   candidate names locally using one exact case-insensitive match. If there is no exact match or
+   more than one candidate, show the ambiguity and ask. Before creating a campaign or custom
+   field, obtain explicit confirmation; for a field also verify that its type and allowed values
+   fit the supplied data.
+3. **Import contacts safely.** Use `/contacts` for one, `/contacts/batch` for 2–1,000, and
+   chunks of 1,000 for larger imports (at most 10 concurrent). A `202` is only acceptance and a
+   `409` means the contact already exists. Before importing, choose production webhook, approved
+   test webhook, or sampling; use sampling when events cannot be observed.
+4. **Resolve the audience and sender.** Confirm that the target campaign or segment is non-empty.
+   Resolve an approved sender; when multiple senders are available and none was specified, ask
+   the user to select one.
+5. **Run the pre-flight immediately before dispatch.** State the exact audience and count,
+   sender, subject, schedule (or immediate send), and delivery impact. Obtain confirmation, then
+   create the newsletter.
+6. **Verify and report.** Read the created newsletter by ID and report the API's returned status.
+   For imports, report the selected verification evidence rather than assuming that `202` means
+   delivery or visibility.
+7. **Handle throttling conservatively.** After `429`, retry one safe read after the required
+   wait. Do not automatically replay a create, import, send, update, cancel, or other mutation;
+   explain the outcome and ask before retrying it.
 
 ---
 
@@ -72,7 +102,8 @@ When a request returns HTTP 429:
 1. Read the `Retry-After` response header — it contains the number of seconds to wait (typically `1`)
 2. Inform the user: *"Rate limit reached — pausing for Ns and resuming."*
 3. Sleep exactly `Retry-After` seconds (default to 1s if header is absent)
-4. Retry the failed request — it should succeed with HTTP 200/201/202
+4. Retry one **safe read** once. Do **not** automatically retry a create, import, send, update,
+   cancel, or other mutation; report it and ask before replaying it.
 
 **Headers present on every 429 response (confirmed on live API):**
 ```
@@ -100,7 +131,9 @@ A "campaign" in GetResponse is a contact list / audience segment.
 ```
 GET /campaigns?query[name]=<name>&page=1&perPage=100
 ```
-Returns array of `Campaign` objects. Filter by name to check existence.
+Returns array of `Campaign` objects. Filter by name to check existence. The API filter can return
+partial matches, so reuse only one exact case-insensitive name match. Otherwise ask the user
+which candidate to use.
 
 ### Create campaign
 ```
@@ -119,6 +152,7 @@ Body:
 - `name` must be unique across the account
 - `optinTypes.api: "single"` skips double opt-in for API-added contacts
 - Returns `Campaign` with `campaignId`
+- Create only after the user explicitly confirms the missing list should be created.
 
 ### Get campaign by ID
 ```
@@ -135,7 +169,8 @@ Custom fields are account-level definitions. They must exist before being refere
 ```
 GET /custom-fields?query[name]=<name>&page=1&perPage=100
 ```
-Use `query[name]` to check if a field already exists.
+Use `query[name]` to check if a field already exists. Reuse only one exact case-insensitive match
+whose type and allowed values fit the incoming data; otherwise ask.
 
 ### Create custom field
 ```
@@ -155,6 +190,7 @@ Body:
 - `hidden`: **always required** — use `"false"` for visible fields
 - `values`: **always required** — use `[]` for `text`/`phone`/`number`/`date` types; provide options for `single_select`/`multi_select`
 - Returns `CustomField` with `customFieldId`
+- Create only after the user explicitly confirms the field name and type.
 
 ### Custom field value format in contacts
 Always wrap values in an array:
@@ -371,9 +407,16 @@ Body:
 - Omit `sendOn` → send immediately
 - Include `sendOn` with ISO 8601 datetime → schedule for future delivery
 
+#### Required pre-flight confirmation:
+Immediately before `POST /newsletters`, state the resolved audience and count, sender, subject,
+schedule, and impact; obtain the user's confirmation. Stop rather than sending when a segment is
+empty or a recipient/sender choice is ambiguous.
+
 #### Response:
-- **201** → success, returns `Newsletter` object with `newsletterId` and `status`
-- `status` can be `scheduled`, `sending`, `sent`, or `draft`
+- **201** → success, returns a `newsletterId` and a status representation
+- Do not infer lifecycle state from the requested schedule. In the live test on 2026-09-04, a
+  future `sendOn` returned `status: "enabled"`; read `GET /newsletters/{newsletterId}` and report
+  the status actually returned by the API.
 
 ### Get newsletter status
 ```

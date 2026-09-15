@@ -741,7 +741,7 @@
         "name": "X-Request-Source",
         "in": "header",
         "required": true,
-        "description": "Identifies agent traffic. Always set to `skill/getresponse-newsletter-skill@1.0` (format `skill/{name}@{version}`) when using this skill.",
+        "description": "Identifies agent traffic. Always set to `getresponse/getresponse-newsletter-skill@1.2.1` when using this skill.",
         "schema": {
           "type": "string",
           "default": "skill/getresponse-newsletter-skill@1.0"

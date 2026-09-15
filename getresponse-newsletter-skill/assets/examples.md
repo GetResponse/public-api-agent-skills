@@ -60,6 +60,8 @@ GET /from-fields
 Use the `fromFieldId` the user chooses (here `ff_xyz789`).
 
 ### Step 4c — Send newsletter
+Immediately before this request, state the campaign audience/count, `ff_xyz789` sender, subject,
+and immediate-send impact, then obtain confirmation.
 ```
 POST /newsletters
 {
@@ -71,13 +73,16 @@ POST /newsletters
     "plain": "Welcome! We are excited to have you."
   },
   "fromField": { "fromFieldId": "ff_xyz789" },
+  "campaign": { "campaignId": "camp_abc123" },
   "sendSettings": {
-    "selectedCampaigns": [{ "campaignId": "camp_abc123" }]
+    "selectedCampaigns": ["camp_abc123"]
   },
   "flags": ["openrate", "clicktrack"]
 }
 → 201 { "newsletterId": "nl_def101", "status": "scheduled" }
 ```
+Read `GET /newsletters/nl_def101` before reporting the final status; the create response can use
+a different status representation.
 
 ---
 
@@ -120,6 +125,8 @@ POST /search-contacts/contacts?perPage=1000
 > instead of creating a newsletter with an empty audience.
 
 ### Step 4c — Send newsletter to specific contacts
+State the resolved recipient count, sender, subject, schedule, and impact, then obtain immediate
+confirmation before this request.
 ```
 POST /newsletters
 {
@@ -131,14 +138,15 @@ POST /newsletters
     "plain": "Tech Update — See what's new."
   },
   "fromField": { "fromFieldId": "ff_xyz789" },
+  "campaign": { "campaignId": "camp_abc123" },
   "sendSettings": {
     "selectedContacts": [
-      { "contactId": "c_001" },
-      { "contactId": "c_002" }
+      "c_001",
+      "c_002"
     ]
   }
 }
-→ 201 { "newsletterId": "nl_ghi202", "status": "scheduled" }
+→ 201 { "newsletterId": "nl_ghi202" }
 ```
 
 ---
@@ -156,9 +164,8 @@ POST /newsletters
    POST /contacts/batch  { "campaignId": "...", "contacts": [...500 contacts...] }
    ```
 4. Monitor `X-RateLimit-Remaining` header; if it reaches 0 in any response, pause all further calls until `X-RateLimit-Reset`
-5. Handle each chunk individually — the import can partially succeed. Retry a failed chunk once;
-   if it still fails, mark it and **continue with the remaining chunks** (don't abort the whole
-   import).
+5. Handle each chunk individually — the import can partially succeed. Do not automatically replay
+   a failed write; mark it, continue with unaffected chunks, and ask before retrying that chunk.
 6. Report per-chunk results, e.g. *"4 of 5 chunks accepted (4000 contacts); chunk 3 (2001–3000)
    failed after retry — HTTP 400. Retry, skip, or fix the data?"*
 7. A `202` means *accepted*, not verified — confirm records actually landed via sampling
@@ -176,8 +183,10 @@ POST /newsletters
   "type": "broadcast",
   "content": { "html": "...", "plain": "..." },
   "fromField": { "fromFieldId": "ff_xyz789" },
-  "sendSettings": { "selectedCampaigns": [{ "campaignId": "camp_abc123" }] },
+  "campaign": { "campaignId": "camp_abc123" },
+  "sendSettings": { "selectedCampaigns": ["camp_abc123"] },
   "sendOn": "2026-06-01T09:00:00+02:00"
 }
 ```
-`sendOn` accepts ISO 8601 with timezone offset.
+`sendOn` accepts ISO 8601 with timezone offset. Confirm the audience, sender, subject, schedule,
+and impact immediately before sending, then read the newsletter by ID to report its actual status.

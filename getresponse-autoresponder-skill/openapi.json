@@ -1,0 +1,67 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "GetResponse Autoresponders API — skill subset",
+    "version": "1.0.0",
+    "description": "Minimal subset for time-based autoresponders. Action-based automation is unsupported."
+  },
+  "servers": [{ "url": "https://api.getresponse.com/v3" }],
+  "paths": {
+    "/autoresponders": {
+      "get": { "operationId": "listAutoresponders", "summary": "List autoresponders", "parameters": [{ "$ref": "#/components/parameters/queryName" }, { "$ref": "#/components/parameters/queryCampaignId" }, { "$ref": "#/components/parameters/queryStatus" }], "responses": { "200": { "description": "Autoresponder list" }, "400": { "$ref": "#/components/responses/ValidationError" }, "401": { "$ref": "#/components/responses/AuthError" }, "429": { "$ref": "#/components/responses/Throttled" } } },
+      "post": { "operationId": "createAutoresponder", "summary": "Create a time-based autoresponder", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NewAutoresponder" } } } }, "responses": { "201": { "description": "Created" }, "400": { "$ref": "#/components/responses/ValidationError" }, "409": { "description": "Conflicting resource; do not treat as success" }, "429": { "$ref": "#/components/responses/Throttled" } } }
+    },
+    "/autoresponders/{autoresponderId}": {
+      "parameters": [{ "$ref": "#/components/parameters/autoresponderId" }],
+      "get": { "operationId": "getAutoresponder", "summary": "Get an autoresponder", "responses": { "200": { "description": "Details" }, "404": { "$ref": "#/components/responses/NotFound" }, "429": { "$ref": "#/components/responses/Throttled" } } },
+      "post": { "operationId": "updateAutoresponder", "summary": "Update a time-based autoresponder", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NewAutoresponder" } } } }, "responses": { "200": { "description": "Updated" }, "404": { "$ref": "#/components/responses/NotFound" }, "409": { "description": "Conflicting resource; do not treat as success" }, "429": { "$ref": "#/components/responses/Throttled" } } },
+      "delete": { "operationId": "deleteAutoresponder", "summary": "Delete an autoresponder — requires final user confirmation", "responses": { "204": { "description": "Deleted" }, "404": { "$ref": "#/components/responses/NotFound" }, "429": { "$ref": "#/components/responses/Throttled" } } }
+    },
+    "/autoresponders/{autoresponderId}/statistics": {
+      "get": { "operationId": "getAutoresponderStatistics", "summary": "Get statistics for an autoresponder", "parameters": [{ "$ref": "#/components/parameters/autoresponderId" }], "responses": { "200": { "description": "Statistics" }, "404": { "$ref": "#/components/responses/NotFound" }, "429": { "$ref": "#/components/responses/Throttled" } } }
+    },
+    "/from-fields": {
+      "get": { "operationId": "listFromFields", "summary": "List approved sender addresses", "responses": { "200": { "description": "Sender addresses" }, "429": { "$ref": "#/components/responses/Throttled" } } }
+    },
+    "/campaigns": {
+      "get": { "operationId": "listCampaigns", "summary": "List campaigns (contact lists)", "parameters": [{ "$ref": "#/components/parameters/queryName" }], "responses": { "200": { "description": "Campaign list" }, "429": { "$ref": "#/components/responses/Throttled" } } },
+      "post": { "operationId": "createCampaign", "summary": "Create a contact list after explicit user confirmation", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NewCampaign" } } } }, "responses": { "201": { "description": "Created campaign; retain campaignId" }, "400": { "$ref": "#/components/responses/ValidationError" }, "409": { "description": "Name conflict; re-list and ask the user" }, "429": { "$ref": "#/components/responses/Throttled" } } }
+    },
+    "/campaigns/{campaignId}": {
+      "parameters": [{ "$ref": "#/components/parameters/campaignId" }],
+      "get": { "operationId": "getCampaign", "summary": "Get a selected campaign by ID", "responses": { "200": { "description": "Campaign" }, "404": { "$ref": "#/components/responses/NotFound" }, "429": { "$ref": "#/components/responses/Throttled" } } }
+    },
+    "/contacts": {
+      "get": { "operationId": "listContacts", "summary": "Find a contact while verifying an asynchronous import", "parameters": [{ "$ref": "#/components/parameters/queryEmail" }], "responses": { "200": { "description": "Contact list" }, "429": { "$ref": "#/components/responses/Throttled" } } },
+      "post": { "operationId": "createContact", "summary": "Import one contact into a selected list", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NewContact" } } } }, "responses": { "202": { "description": "Accepted for asynchronous import; verify by polling" }, "409": { "description": "Contact already exists; do not retry" }, "429": { "$ref": "#/components/responses/Throttled" } } }
+    },
+    "/contacts/batch": {
+      "post": { "operationId": "batchCreateContacts", "summary": "Import 2–1000 contacts into a selected list", "requestBody": { "required": true, "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ContactBatch" } } } }, "responses": { "202": { "description": "Accepted for asynchronous import; verify a sample" }, "400": { "$ref": "#/components/responses/ValidationError" }, "429": { "$ref": "#/components/responses/Throttled" } } }
+    },
+    "/custom-fields": {
+      "get": { "operationId": "listCustomFields", "summary": "Resolve custom fields supplied with contacts", "parameters": [{ "$ref": "#/components/parameters/queryName" }], "responses": { "200": { "description": "Custom field list" }, "429": { "$ref": "#/components/responses/Throttled" } } }
+    }
+  },
+  "components": {
+    "parameters": {
+      "autoresponderId": { "name": "autoresponderId", "in": "path", "required": true, "schema": { "type": "string" } },
+      "campaignId": { "name": "campaignId", "in": "path", "required": true, "schema": { "type": "string" } },
+      "queryName": { "name": "query[name]", "in": "query", "schema": { "type": "string" }, "description": "URL-encode key and value" },
+      "queryCampaignId": { "name": "query[campaignId]", "in": "query", "schema": { "type": "string" }, "description": "URL-encode key and value" },
+      "queryEmail": { "name": "query[email]", "in": "query", "schema": { "type": "string", "format": "email" }, "description": "URL-encode key and value" },
+      "queryStatus": { "name": "query[status]", "in": "query", "schema": { "type": "string", "enum": ["enabled", "disabled"] } }
+    },
+    "schemas": {
+      "NewAutoresponder": { "type": "object", "required": ["status", "subject", "content", "sendSettings", "triggerSettings"], "properties": { "name": { "type": "string", "minLength": 2, "maxLength": 128 }, "subject": { "type": "string", "minLength": 2, "maxLength": 128 }, "campaignId": { "type": "string" }, "status": { "type": "string", "enum": ["enabled", "disabled"] }, "fromField": { "$ref": "#/components/schemas/FromFieldReference" }, "replyTo": { "$ref": "#/components/schemas/FromFieldReference" }, "content": { "$ref": "#/components/schemas/MessageContent" }, "sendSettings": { "$ref": "#/components/schemas/SendSettings" }, "triggerSettings": { "$ref": "#/components/schemas/TriggerSettings" }, "flags": { "type": "array", "items": { "type": "string", "enum": ["clicktrack", "google_analytics"] } }, "trackOpens": { "type": "string", "enum": ["true", "false"] } } },
+      "FromFieldReference": { "type": "object", "required": ["fromFieldId"], "properties": { "fromFieldId": { "type": "string" } } },
+      "MessageContent": { "type": "object", "properties": { "html": { "type": "string", "maxLength": 524288 }, "plain": { "type": "string", "maxLength": 524288 } } },
+      "SendSettings": { "type": "object", "required": ["type"], "properties": { "type": { "type": "string", "enum": ["signup", "immediately", "delay", "custom"] }, "delayInHours": { "type": "integer", "minimum": 0 }, "sendAtHour": { "type": "integer", "minimum": 0, "maximum": 23 }, "timeTravel": { "type": "string", "enum": ["true", "false"] }, "excludedDaysOfWeek": { "type": "array", "items": { "type": "string" } } }, "description": "Choose a type and include every setting that the current official schema requires for that variant." },
+      "TriggerSettings": { "type": "object", "properties": { "type": { "type": "string", "enum": ["onday"], "default": "onday", "deprecated": true }, "dayOfCycle": { "type": "integer", "minimum": 0, "maximum": 9999 } }, "description": "Legacy time-cycle trigger only. Do not use action-based fields." },
+      "NewCampaign": { "type": "object", "required": ["name"], "properties": { "name": { "type": "string", "minLength": 3, "maxLength": 64, "description": "Unique list name; must not contain /, \\, @, [ or ]" }, "optinTypes": { "type": "object", "properties": { "api": { "type": "string", "enum": ["single", "double"] } }, "description": "Set only when the user explicitly requests an API opt-in policy." } } },
+      "CustomFieldValue": { "type": "object", "required": ["customFieldId", "value"], "properties": { "customFieldId": { "type": "string" }, "value": { "type": "array", "items": { "type": "string" } } } },
+      "NewContact": { "type": "object", "required": ["email", "campaign"], "properties": { "email": { "type": "string", "format": "email" }, "name": { "type": "string" }, "campaign": { "type": "object", "required": ["campaignId"], "properties": { "campaignId": { "type": "string" } } }, "customFieldValues": { "type": "array", "items": { "$ref": "#/components/schemas/CustomFieldValue" } } } },
+      "ContactBatch": { "type": "object", "required": ["campaignId", "contacts"], "properties": { "campaignId": { "type": "string" }, "contacts": { "type": "array", "minItems": 2, "maxItems": 1000, "items": { "type": "object", "required": ["email"], "properties": { "email": { "type": "string", "format": "email" }, "name": { "type": "string" }, "customFieldValues": { "type": "array", "items": { "$ref": "#/components/schemas/CustomFieldValue" } } } } } } }
+    },
+    "responses": { "ValidationError": { "description": "Validation error" }, "AuthError": { "description": "Authentication error" }, "NotFound": { "description": "Resource not found" }, "Throttled": { "description": "Rate limit reached; honor Retry-After or reset headers" } }
+  }
+}

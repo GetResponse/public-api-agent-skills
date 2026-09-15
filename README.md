@@ -35,11 +35,22 @@ everything an agent needs to use it:
 
 ```
 .
-└── getresponse-newsletter-skill/
+├── getresponse-newsletter-skill/
     ├── SKILL.md          # Manifest + step-by-step workflow instructions
     ├── openapi.json      # AI-optimized GetResponse API spec
     ├── references/       # Detailed API reference (auth, limits, payloads, errors)
     └── assets/           # Worked examples for the main use cases
+├── getresponse-autoresponder-skill/
+    ├── SKILL.md          # Time-based autoresponders, lists, and contact imports
+    ├── openapi.json      # AI-optimized GetResponse API spec
+    ├── references/       # Detailed API reference (auth, limits, payloads, errors)
+    └── assets/           # Worked examples for the main use cases
+└── getresponse-contacts-skill/
+    ├── SKILL.md          # Contact maintenance and imports
+    ├── openapi.json      # Supported API contracts
+    ├── references/       # Procedures and verification
+    ├── scripts/          # Offline collection-removal helper
+    └── assets/           # Worked examples
 ```
 
 ---
@@ -49,6 +60,8 @@ everything an agent needs to use it:
 | Skill | What it does |
 |---|---|
 | [`getresponse-newsletter-skill`](getresponse-newsletter-skill/) | Manage contacts and send HTML newsletters via the GetResponse API v3. Finds or creates campaigns (contact lists) and custom fields, adds contacts (single or bulk import up to 1000 per request), verifies asynchronous imports, and sends HTML newsletters to a whole campaign or to a segment filtered by custom field values — including scheduled sends. Rate-limit aware (honors `X-RateLimit-*` and HTTP 429 `Retry-After`). |
+| [`getresponse-autoresponder-skill`](getresponse-autoresponder-skill/) | Manage time-based autoresponder messages and their recipients through GetResponse API v3: find or create a list, import contacts, then list, inspect, create, update, enable/disable, delete, and read statistics. Excludes newsletters and action-based Marketing Automation workflows. |
+| [`getresponse-contacts-skill`](getresponse-contacts-skill/) | Standalone contact maintenance: search, add, update, move, delete, manage tag/custom-field assignments, import with verification, and read consent history. Finds or creates supporting lists and definitions. Excludes segment management and message delivery. |
 
 ---
 
@@ -68,6 +81,9 @@ npx skills add GetResponse/public-api-agent-skills
 
 # install a specific skill
 npx skills add GetResponse/public-api-agent-skills --skill getresponse-newsletter-skill
+
+# install the autoresponder skill
+npx skills add GetResponse/public-api-agent-skills --skill getresponse-autoresponder-skill
 
 # preview the skills in this repo without installing
 npx skills add GetResponse/public-api-agent-skills --list
