@@ -1,0 +1,104 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "GetResponse Search Contacts Skill API",
+    "version": "1.0.0",
+    "description": "Minimal operation contract derived from https://apireference.getresponse.com/open-api.json (API version 3.2026-08-20T11:07:16+00:00), inspected 2026-09-22. Search Contacts are segments. See the official segments manual for condition-specific payload variants."
+  },
+  "servers": [{"url": "https://api.getresponse.com/v3"}],
+  "security": [{"api-key": []}, {"oauth2": ["all"]}],
+  "paths": {
+    "/search-contacts/contacts": {
+      "post": {
+        "tags": ["Search Contacts"],
+        "summary": "Search contacts using advanced conditions without saving a segment",
+        "operationId": "getContactsFromSearchContactsConditions",
+        "parameters": [{"$ref": "#/components/parameters/RequestSource"}, {"$ref": "#/components/parameters/SortName"}, {"$ref": "#/components/parameters/SortEmail"}, {"$ref": "#/components/parameters/SortCreatedOn"}, {"$ref": "#/components/parameters/Fields"}, {"$ref": "#/components/parameters/PerPage"}, {"$ref": "#/components/parameters/Page"}],
+        "requestBody": {"$ref": "#/components/requestBodies/OneOffSearch"},
+        "responses": {"200": {"$ref": "#/components/responses/ContactList"}, "400": {"$ref": "#/components/responses/ValidationError"}, "401": {"$ref": "#/components/responses/AuthError"}, "429": {"$ref": "#/components/responses/ThrottleError"}}
+      }
+    },
+    "/search-contacts": {
+      "get": {
+        "tags": ["Search Contacts"],
+        "summary": "List saved segments",
+        "operationId": "getSearchContactsList",
+        "parameters": [{"$ref": "#/components/parameters/RequestSource"}, {"$ref": "#/components/parameters/QueryName"}, {"$ref": "#/components/parameters/QueryCreatedFrom"}, {"$ref": "#/components/parameters/QueryCreatedTo"}, {"$ref": "#/components/parameters/SortName"}, {"$ref": "#/components/parameters/SortCreatedOn"}, {"$ref": "#/components/parameters/Fields"}, {"$ref": "#/components/parameters/PerPage"}, {"$ref": "#/components/parameters/Page"}],
+        "responses": {"200": {"$ref": "#/components/responses/SavedSearchList"}, "400": {"$ref": "#/components/responses/ValidationError"}, "401": {"$ref": "#/components/responses/AuthError"}, "429": {"$ref": "#/components/responses/ThrottleError"}}
+      },
+      "post": {
+        "tags": ["Search Contacts"],
+        "summary": "Create a saved segment",
+        "operationId": "newSearchContacts",
+        "parameters": [{"$ref": "#/components/parameters/RequestSource"}],
+        "requestBody": {"$ref": "#/components/requestBodies/SavedSearch"},
+        "responses": {"201": {"$ref": "#/components/responses/SavedSearch"}, "400": {"$ref": "#/components/responses/ValidationError"}, "409": {"$ref": "#/components/responses/ConflictError"}, "401": {"$ref": "#/components/responses/AuthError"}, "429": {"$ref": "#/components/responses/ThrottleError"}}
+      }
+    },
+    "/search-contacts/{searchContactId}": {
+      "parameters": [{"$ref": "#/components/parameters/SearchContactId"}],
+      "get": {
+        "tags": ["Search Contacts"], "summary": "Get a saved segment definition", "operationId": "getSearchContactsById",
+        "parameters": [{"$ref": "#/components/parameters/RequestSource"}, {"$ref": "#/components/parameters/Fields"}],
+        "responses": {"200": {"$ref": "#/components/responses/SavedSearch"}, "404": {"$ref": "#/components/responses/NotFoundError"}, "400": {"$ref": "#/components/responses/ValidationError"}, "401": {"$ref": "#/components/responses/AuthError"}, "429": {"$ref": "#/components/responses/ThrottleError"}}
+      },
+      "post": {
+        "tags": ["Search Contacts"], "summary": "Replace a saved segment definition", "operationId": "updateSearchContacts",
+        "parameters": [{"$ref": "#/components/parameters/RequestSource"}], "requestBody": {"$ref": "#/components/requestBodies/SavedSearch"},
+        "responses": {"200": {"$ref": "#/components/responses/SavedSearch"}, "400": {"$ref": "#/components/responses/ValidationError"}, "404": {"$ref": "#/components/responses/NotFoundError"}, "409": {"$ref": "#/components/responses/ConflictError"}, "401": {"$ref": "#/components/responses/AuthError"}, "429": {"$ref": "#/components/responses/ThrottleError"}}
+      },
+      "delete": {
+        "tags": ["Search Contacts"], "summary": "Delete a saved segment", "operationId": "deleteSearchContacts",
+        "parameters": [{"$ref": "#/components/parameters/RequestSource"}],
+        "responses": {"204": {"description": "Deleted"}, "404": {"$ref": "#/components/responses/NotFoundError"}, "400": {"$ref": "#/components/responses/ValidationError"}, "401": {"$ref": "#/components/responses/AuthError"}, "429": {"$ref": "#/components/responses/ThrottleError"}}
+      }
+    },
+    "/search-contacts/{searchContactId}/contacts": {
+      "parameters": [{"$ref": "#/components/parameters/SearchContactId"}],
+      "get": {
+        "tags": ["Search Contacts"], "summary": "List contacts matched by a saved segment", "operationId": "getContactsByIdSearchContacts",
+        "parameters": [{"$ref": "#/components/parameters/RequestSource"}, {"$ref": "#/components/parameters/SortName"}, {"$ref": "#/components/parameters/SortEmail"}, {"$ref": "#/components/parameters/SortCreatedOn"}, {"$ref": "#/components/parameters/Fields"}, {"$ref": "#/components/parameters/PerPage"}, {"$ref": "#/components/parameters/Page"}],
+        "responses": {"200": {"$ref": "#/components/responses/ContactList"}, "404": {"$ref": "#/components/responses/NotFoundError"}, "400": {"$ref": "#/components/responses/ValidationError"}, "401": {"$ref": "#/components/responses/AuthError"}, "429": {"$ref": "#/components/responses/ThrottleError"}}
+      }
+    },
+    "/search-contacts/{searchContactId}/custom-fields": {
+      "parameters": [{"$ref": "#/components/parameters/SearchContactId"}],
+      "post": {
+        "tags": ["Search Contacts"], "summary": "Upsert custom-field values for every current segment match", "operationId": "upsertCustomFieldsBySearchContactId",
+        "description": "High-impact bulk write. Preview result count and require explicit authorization before calling.",
+        "parameters": [{"$ref": "#/components/parameters/RequestSource"}], "requestBody": {"$ref": "#/components/requestBodies/CustomFieldUpsert"},
+        "responses": {"202": {"description": "Accepted for asynchronous processing; verify a bounded sample and do not replay an uncertain request."}, "404": {"$ref": "#/components/responses/NotFoundError"}, "400": {"$ref": "#/components/responses/ValidationError"}, "401": {"$ref": "#/components/responses/AuthError"}, "429": {"$ref": "#/components/responses/ThrottleError"}}
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {"api-key": {"type": "apiKey", "in": "header", "name": "X-Auth-Token"}, "oauth2": {"type": "oauth2", "flows": {"authorizationCode": {"authorizationUrl": "https://app.getresponse.com/oauth2_authorize.html", "tokenUrl": "https://api.getresponse.com/v3/token", "scopes": {"all": "Full API access"}}}}},
+    "parameters": {
+      "RequestSource": {"name": "X-Request-Source", "in": "header", "required": true, "schema": {"type": "string", "enum": ["getresponse/getresponse-search-contacts-skill@1.0.0"]}},
+      "SearchContactId": {"name": "searchContactId", "in": "path", "required": true, "schema": {"type": "string"}},
+      "Fields": {"name": "fields", "in": "query", "schema": {"type": "string"}}, "PerPage": {"name": "perPage", "in": "query", "schema": {"type": "integer", "minimum": 1, "maximum": 1000, "default": 100}}, "Page": {"name": "page", "in": "query", "schema": {"type": "integer", "minimum": 1, "default": 1}},
+      "SortName": {"name": "sort[name]", "in": "query", "schema": {"$ref": "#/components/schemas/SortOrder"}}, "SortEmail": {"name": "sort[email]", "in": "query", "schema": {"$ref": "#/components/schemas/SortOrder"}}, "SortCreatedOn": {"name": "sort[createdOn]", "in": "query", "schema": {"$ref": "#/components/schemas/SortOrder"}},
+      "QueryName": {"name": "query[name]", "in": "query", "schema": {"type": "string"}}, "QueryCreatedFrom": {"name": "query[createdOn][from]", "in": "query", "schema": {"type": "string", "format": "date-time"}}, "QueryCreatedTo": {"name": "query[createdOn][to]", "in": "query", "schema": {"type": "string", "format": "date-time"}}
+    },
+    "requestBodies": {
+      "OneOffSearch": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/OneOffSearch"}}}}, "SavedSearch": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SavedSearchInput"}}}}, "CustomFieldUpsert": {"required": true, "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CustomFieldUpsert"}}}}
+    },
+    "responses": {
+      "ContactList": {"description": "Paginated contacts matching the conditions", "headers": {"TotalCount": {"schema": {"type": "integer"}}, "TotalPages": {"schema": {"type": "integer"}}, "CurrentPage": {"schema": {"type": "integer"}}}, "content": {"application/json": {"schema": {"type": "array", "items": {"$ref": "#/components/schemas/Contact"}}}}},
+      "SavedSearchList": {"description": "Paginated saved-segment summaries", "content": {"application/json": {"schema": {"type": "array", "items": {"$ref": "#/components/schemas/SavedSearchSummary"}}}}}, "SavedSearch": {"description": "Saved-segment definition", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SavedSearch"}}}},
+      "ValidationError": {"description": "Validation error"}, "AuthError": {"description": "Authentication or authorization error"}, "NotFoundError": {"description": "Resource not found"}, "ConflictError": {"description": "Name conflict"}, "ThrottleError": {"description": "Rate limit reached"}
+    },
+    "schemas": {
+      "SortOrder": {"type": "string", "enum": ["asc", "desc"]},
+      "OneOffSearch": {"required": ["subscribersType", "sectionLogicOperator", "section"], "allOf": [{"$ref": "#/components/schemas/SearchConditions"}], "properties": {"subscribersType": {"type": "array", "minItems": 1, "items": {"type": "string", "enum": ["subscribed", "undelivered", "removed", "unconfirmed"]}}}},
+      "SavedSearchInput": {"required": ["name", "sectionLogicOperator", "section"], "allOf": [{"$ref": "#/components/schemas/SearchConditions"}], "properties": {"name": {"type": "string", "description": "Unique saved segment name"}, "subscribersType": {"type": "array", "items": {"type": "string", "enum": ["subscribed"]}, "default": ["subscribed"]}}},
+      "SearchConditions": {"required": ["sectionLogicOperator", "section"], "properties": {"sectionLogicOperator": {"type": "string", "enum": ["and", "or"]}, "section": {"type": "array", "minItems": 1, "maxItems": 8, "items": {"$ref": "#/components/schemas/Section"}}}},
+      "Section": {"required": ["campaignIdsList", "logicOperator", "subscriberCycle", "subscriptionDate"], "properties": {"campaignIdsList": {"type": "array", "items": {"type": "string"}}, "logicOperator": {"type": "string", "enum": ["and", "or"]}, "subscriberCycle": {"type": "array", "items": {"type": "string", "enum": ["receiving_autoresponder", "not_receiving_autoresponder"]}}, "subscriptionDate": {"type": "string", "enum": ["all_time", "today", "yesterday", "last_7_days", "last_30_days", "this_week", "last_week", "this_month", "last_month", "last_2_months", "custom"]}, "conditions": {"type": "array", "maxItems": 8, "items": {"$ref": "#/components/schemas/Condition"}}}},
+      "Condition": {"required": ["conditionType"], "description": "Condition-specific fields, operator and value dependencies are defined in the official segments manual.", "properties": {"conditionType": {"type": "string", "enum": ["name", "email", "custom", "subscription_date", "subscription_method", "opened", "not_opened", "phase", "last_send_date", "last_click_date", "last_open_date", "webinar", "clicked", "not_clicked", "sent", "not_sent", "geo", "gdpr", "score", "engagement_score", "tag", "goal", "crm", "ecommerce_number_of_purchases", "ecommerce_total_spent", "ecommerce_product_purchased", "ecommerce_brand_purchased", "ecommerce_abandoned_cart", "sms_sent", "sms_link_clicked", "sms_link_not_clicked", "custom_event"]}}, "additionalProperties": true},
+      "CustomFieldUpsert": {"required": ["customFieldValues"], "properties": {"customFieldValues": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["customFieldId", "value"], "properties": {"customFieldId": {"type": "string"}, "value": {"type": "array", "items": {"type": "string"}}}}}}},
+      "SavedSearchSummary": {"required": ["searchContactId", "name"], "properties": {"searchContactId": {"type": "string"}, "name": {"type": "string"}, "createdOn": {"type": "string", "format": "date-time"}, "href": {"type": "string", "format": "uri"}}},
+      "SavedSearch": {"allOf": [{"$ref": "#/components/schemas/SavedSearchInput"}, {"$ref": "#/components/schemas/SavedSearchSummary"}]},
+      "Contact": {"type": "object", "properties": {"contactId": {"type": "string"}, "email": {"type": "string", "format": "email"}, "name": {"type": "string"}, "campaign": {"type": "object"}, "customFieldValues": {"type": "array"}}}
+    }
+  }
+}

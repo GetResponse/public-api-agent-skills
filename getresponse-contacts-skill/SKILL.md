@@ -28,11 +28,9 @@ allowed-tools:
 
 ## DO NOT USE FOR:
 
-- Saved segments or advanced segment searches (`/search-contacts`).
+- Segments/advanced searches: use `getresponse-search-contacts-skill`.
 - Newsletter delivery, autoresponder setup, copying, exports or activity reports.
 - Consent writes, list settings, global definition edits/deletion, blocklists or suppressions.
-
-Explain exclusions.
 
 ## Rules
 
